@@ -1,0 +1,83 @@
+apply plugin: 'com.android.application'
+
+android {
+
+    signingConfigs {
+        debug {
+            storeFile file("key.keystore")
+            storePassword "key password"
+            keyAlias "key alias"
+            keyPassword "key password"
+        }
+        release {
+            storeFile file("key.keystore")
+            storePassword "key password"
+            keyAlias "key alias"
+            keyPassword "key password"
+        }
+    }
+
+    compileSdkVersion 28
+    buildToolsVersion "29.0.1"
+    defaultConfig {
+        applicationId "com.example.dnbaidu"
+        minSdkVersion 16
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        setKeyStore()
+    }
+    buildTypes {
+        debug {
+            debuggable true
+            signingConfig signingConfigs.debug
+        }
+
+        release {
+            debuggable false     //不可debug
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
+    }
+
+    sourceSets{
+        main{
+            jniLibs.srcDir 'libs'
+            jni.srcDirs = []    //disable automatic ndk-build
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+
+    //百度定位
+    implementation files('libs/BaiduLBS_Android.jar')
+}
+
+
+def setKeyStore() {
+    File propFile = file('signing.properties');
+    if (propFile.exists()) {
+        def Properties props = new Properties()
+        props.load(new FileInputStream(propFile))
+        if (props.containsKey('STORE_FILE') && props.containsKey('STORE_PASSWORD') && props.containsKey('KEY_ALIAS') && props.containsKey('KEY_PASSWORD')) {
+            android.signingConfigs.release.storeFile = file(props['STORE_FILE'])
+            android.signingConfigs.release.storePassword = props['STORE_PASSWORD']
+            android.signingConfigs.release.keyAlias = props['KEY_ALIAS']
+            android.signingConfigs.release.keyPassword = props['KEY_PASSWORD']
+            android.signingConfigs.debug.storeFile = file(props['STORE_FILE'])
+            android.signingConfigs.debug.storePassword = props['STORE_PASSWORD']
+            android.signingConfigs.debug.keyAlias = props['KEY_ALIAS']
+            android.signingConfigs.debug.keyPassword = props['KEY_PASSWORD']
+        } else {
+            android.buildTypes.release.signingConfig = null
+            android.buildTypes.debug.signingConfig = null
+        }
+    } else {
+        android.buildTypes.release.signingConfig = null
+        android.buildTypes.debug.signingConfig = null
+    }
+}
